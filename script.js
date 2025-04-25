@@ -52,7 +52,8 @@ function startTimer() {
   document.getElementById("calculateBtn").disabled = true;
   pauseBtn.style.display = "inline-block";
   pauseBtn.textContent = "Pause";
-  toggleInputs(true);
+
+  // Remove toggleInputs(true) to allow editing during timer
 
   timer = setInterval(() => {
     if (!isPaused) {
@@ -62,7 +63,6 @@ function startTimer() {
         timeLeftEl.style.color = "red";
       }
 
-      // Beep per second for last 5 seconds
       if (secondsLeft > 0 && secondsLeft <= 5) {
         alertSound.currentTime = 0;
         alertSound.play();
@@ -77,12 +77,17 @@ function startTimer() {
         timeLeftEl.classList.add("highlight");
         startBtn.disabled = false;
         document.getElementById("calculateBtn").disabled = false;
-        toggleInputs(false);
         pauseBtn.style.display = "none";
         alertSound.play();
+        toggleInputs(false); // Enable mode/gasType again after timer
       }
     }
   }, 1000);
+
+  // Only disable inputs that affect timer behavior
+  document.getElementById("mode").disabled = true;
+  document.getElementById("duration").disabled = true;
+  document.getElementById("gasType").disabled = true;
 }
 
 function togglePauseResume() {
@@ -174,4 +179,3 @@ function toggleDarkMode(enabled) {
   document.body.classList.toggle("dark-mode", enabled);
   localStorage.setItem("darkMode", enabled);
 }
-
