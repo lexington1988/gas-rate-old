@@ -2,6 +2,16 @@ let timer;
 let secondsLeft = 0;
 let isPaused = false;
 
+// Unlock audio on first user interaction (for mobile browsers)
+document.addEventListener('click', () => {
+  const alertSound = document.getElementById("alertSound");
+  if (alertSound) {
+    alertSound.play().catch(() => {}); // try to unlock the sound
+    alertSound.pause();
+    alertSound.currentTime = 0;
+  }
+}, { once: true });
+
 function init() {
   toggleMode();
 
@@ -53,8 +63,6 @@ function startTimer() {
   pauseBtn.style.display = "inline-block";
   pauseBtn.textContent = "Pause";
 
-  // Remove toggleInputs(true) to allow editing during timer
-
   timer = setInterval(() => {
     if (!isPaused) {
       secondsLeft--;
@@ -65,7 +73,7 @@ function startTimer() {
 
       if (secondsLeft > 0 && secondsLeft <= 5) {
         alertSound.currentTime = 0;
-        alertSound.play();
+        alertSound.play().catch(() => {});
       }
 
       timeLeftEl.textContent = formatTime(secondsLeft);
@@ -78,13 +86,12 @@ function startTimer() {
         startBtn.disabled = false;
         document.getElementById("calculateBtn").disabled = false;
         pauseBtn.style.display = "none";
-        alertSound.play();
-        toggleInputs(false); // Enable mode/gasType again after timer
+        alertSound.play().catch(() => {});
+        toggleInputs(false);
       }
     }
   }, 1000);
 
-  // Only disable inputs that affect timer behavior
   document.getElementById("mode").disabled = true;
   document.getElementById("duration").disabled = true;
   document.getElementById("gasType").disabled = true;
