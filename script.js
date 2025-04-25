@@ -5,11 +5,15 @@ let isPaused = false;
 function init() {
   toggleMode();
 
-  const darkModeSetting = localStorage.getItem("darkMode");
-  if (darkModeSetting === "true") {
-    document.body.classList.add("dark-mode");
-    document.getElementById("darkModeToggle").checked = true;
-  }
+  const darkModeToggle = document.getElementById("darkModeToggle");
+  const darkModeSetting = localStorage.getItem("darkMode") === "true";
+
+  document.body.classList.toggle("dark-mode", darkModeSetting);
+  darkModeToggle.checked = darkModeSetting;
+
+  darkModeToggle.addEventListener("change", () => {
+    toggleDarkMode(darkModeToggle.checked);
+  });
 }
 
 function toggleMode() {
@@ -34,8 +38,8 @@ function startTimer() {
   const timeLeftEl = document.getElementById("timeLeft");
   const startBtn = document.getElementById("startBtn");
   const pauseBtn = document.getElementById("pauseBtn");
+  const alertSound = document.getElementById("alertSound");
 
-  // Always reset the timer when Start is pressed
   clearInterval(timer);
   timer = null;
   isPaused = false;
@@ -58,6 +62,12 @@ function startTimer() {
         timeLeftEl.style.color = "red";
       }
 
+      // Beep per second for last 5 seconds
+      if (secondsLeft > 0 && secondsLeft <= 5) {
+        alertSound.currentTime = 0;
+        alertSound.play();
+      }
+
       timeLeftEl.textContent = formatTime(secondsLeft);
 
       if (secondsLeft <= 0) {
@@ -69,7 +79,7 @@ function startTimer() {
         document.getElementById("calculateBtn").disabled = false;
         toggleInputs(false);
         pauseBtn.style.display = "none";
-        document.getElementById("alertSound").play();
+        alertSound.play();
       }
     }
   }, 1000);
@@ -160,7 +170,8 @@ function resetForm() {
   init();
 }
 
-function toggleDarkMode() {
-  const isDark = document.body.classList.toggle("dark-mode");
-  localStorage.setItem("darkMode", isDark);
+function toggleDarkMode(enabled) {
+  document.body.classList.toggle("dark-mode", enabled);
+  localStorage.setItem("darkMode", enabled);
 }
+
