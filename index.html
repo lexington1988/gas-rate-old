@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +6,6 @@
   <title>Gas Rate Calculator</title>
   <link rel="manifest" href="manifest.json" />
   <style>
-    /* Inlined CSS from the user's code for simplicity */
     body {
       font-family: Arial, sans-serif;
       padding: 2rem;
@@ -125,10 +123,18 @@
       to { transform: scale(1.1); opacity: 0.7; }
     }
 
+    .toggles-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      gap: 0.5rem;
+    }
+
     .toggle-wrapper {
       display: flex;
       align-items: center;
-      margin-bottom: 1rem;
+      gap: 0.5rem;
     }
 
     .toggle-wrapper label {
@@ -141,18 +147,36 @@
       color: #e0d1ff;
     }
 
-    #darkModeToggle {
+    #darkModeToggle, #imperialToggle {
       position: absolute;
       opacity: 0;
       pointer-events: none;
+    }
+
+    #imperialStatus {
+      flex: 1;
+      text-align: center;
+      font-weight: bold;
+      color: #6a0dad;
+    }
+
+    .dark-mode #imperialStatus {
+      color: #d6b3ff;
     }
   </style>
 </head>
 <body onload="init()">
   <div class="container">
-    <div class="toggle-wrapper">
-      <label for="darkModeToggle" onclick="toggleDarkMode()">Dark Mode</label>
-      <input type="checkbox" id="darkModeToggle">
+    <div class="toggles-row">
+      <div class="toggle-wrapper">
+        <label for="darkModeToggle" onclick="toggleDarkMode()">Dark Mode</label>
+        <input type="checkbox" id="darkModeToggle">
+      </div>
+      <div id="imperialStatus"> </div>
+      <div class="toggle-wrapper">
+        <label for="imperialToggle">Imperial Mode</label>
+        <input type="checkbox" id="imperialToggle">
+      </div>
     </div>
 
     <h2>Gas Rate Calculator</h2>
@@ -188,11 +212,18 @@
       <div id="timeLeft">0:00</div>
     </div>
 
-    <label for="initial">Initial Reading</label>
-    <input type="number" id="initial" step="any"/>
+    <div id="imperialVolumeSection" style="display:none;">
+      <label for="imperialVolume">Volume Used (ft³)</label>
+      <input type="number" id="imperialVolume" step="any"/>
+    </div>
 
-    <label for="final">Final Reading</label>
-    <input type="number" id="final" step="any"/>
+    <div id="meterReadings">
+      <label for="initial">Initial Reading</label>
+      <input type="number" id="initial" step="any"/>
+
+      <label for="final">Final Reading</label>
+      <input type="number" id="final" step="any"/>
+    </div>
 
     <button id="calculateBtn" onclick="calculateRate()">Calculate</button>
     <button onclick="resetForm()">Reset</button>
