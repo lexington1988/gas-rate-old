@@ -7,16 +7,13 @@ let imperialMode = false;
 function init() {
   document.getElementById('darkModeToggle').addEventListener('change', toggleDarkMode);
   document.getElementById('imperialToggle').addEventListener('change', toggleImperialMode);
-  toggleMode();
+  document.getElementById('gcNumber').addEventListener('input', toggleMode);
+  setupGCInput();
 }
 
 function toggleDarkMode() {
   const darkMode = document.getElementById('darkModeToggle').checked;
-  if (darkMode) {
-    document.body.classList.add('dark-mode');
-  } else {
-    document.body.classList.remove('dark-mode');
-  }
+  document.body.classList.toggle('dark-mode', darkMode);
 }
 
 function toggleImperialMode() {
@@ -29,7 +26,6 @@ function toggleImperialMode() {
   const imperialVolumeInput = document.getElementById('imperialVolume');
   const meterReadings = document.getElementById('meterReadings');
 
-  // Reset timer and results when switching mode
   resetTimerOnly();
   document.getElementById('result').textContent = '';
 
@@ -39,9 +35,7 @@ function toggleImperialMode() {
     status.textContent = 'Imperial mode activated';
     modeSelect.value = 'timer';
 
-    if (manualOption) {
-      modeSelect.removeChild(manualOption);
-    }
+    if (manualOption) modeSelect.removeChild(manualOption);
 
     modeSelect.style.display = 'none';
     if (modeLabel) modeLabel.textContent = '';
@@ -73,7 +67,7 @@ function toggleImperialMode() {
   }
 
   toggleMode();
-  toggleDarkMode(); // reapply dark mode after DOM changes
+  toggleDarkMode();
 }
 
 function toggleMode() {
@@ -81,13 +75,8 @@ function toggleMode() {
   const manualSection = document.getElementById('manualDuration');
   const timerSection = document.getElementById('timerSection');
 
-  if (mode === 'manual') {
-    manualSection.style.display = 'block';
-    timerSection.style.display = 'none';
-  } else {
-    manualSection.style.display = 'none';
-    timerSection.style.display = 'block';
-  }
+  manualSection.style.display = mode === 'manual' ? 'block' : 'none';
+  timerSection.style.display = mode !== 'manual' ? 'block' : 'none';
 }
 
 function startTimer() {
@@ -109,7 +98,9 @@ function startTimer() {
     } else {
       clearInterval(stopwatchInterval);
       stopwatchInterval = null;
+      timeLeft.textContent = '0:00';
       startBtn.textContent = 'Start Timer';
+      time = 0;
     }
     return;
   }
@@ -177,16 +168,35 @@ function calculateRate() {
     }
 
     duration = time;
-    const gasRate = (3600 * volumeUsed) / duration; // ft³/hr
-    const calorificValue = 1040; // Typical CV for imperial in BTU/ft³
+    const gasRate = (3600 * volumeUsed) / duration;
+    const calorificValue = 1040;
     const grossBTU = gasRate * calorificValue;
     const grosskW = grossBTU / 3412;
     const netkW = grosskW / 1.1;
 
+    const gc = document.getElementById('gcNumber').value;
+    const boiler = findBoilerByGC(gc);
+
+    let boilerDetails = '';
+    if (boiler) {
+      const makeModel = `<strong>${boiler.Make?.trim() || ''} ${boiler.Model?.trim() || ''}</strong><br>`;
+      const tolerance = `Net Heat Input Range: ${(netkW * 1.05).toFixed(2)} kW max / ${(netkW * 0.9).toFixed(2)} kW min<br>`;
+      const co2Range = `Max CO₂: ${boiler['Max Co2'] || ''}% / Min CO₂: ${boiler['Min Co2'] || ''}%<br>`;
+      const ratio = `Max Ratio: ${boiler['Max Ratio'] || ''}<br>`;
+      const co = `Max CO: ${boiler['Max Co(ppm)'] || ''} ppm<br>`;
+      const pressure = `Max Pressure: ${boiler['Max Burner Pressure (mb)'] || ''} mb / Min Pressure: ${boiler['Min Burner Pressure (mb)'] || ''} mb<br>`;
+      const strip = boiler['Strip Service Required']?.toLowerCase() === 'yes'
+        ? `<small>*Strip Service Required</small><br>`
+        : '';
+
+      boilerDetails = makeModel + tolerance + co2Range + ratio + co + pressure + strip;
+    }
+
     result.innerHTML =
       `Gas Rate: ${gasRate.toFixed(2)} ft³/hr<br>` +
       `Gross Heat Input: ${grosskW.toFixed(2)} kW<br>` +
-      `Net Heat Input: ${netkW.toFixed(2)} kW`;
+      `Net Heat Input: ${netkW.toFixed(2)} kW<br>` +
+      boilerDetails;
   } else {
     const initial = parseFloat(document.getElementById('initial').value);
     const final = parseFloat(document.getElementById('final').value);
@@ -216,7 +226,6 @@ function calculateRate() {
       `Net Heat Input: ${net.toFixed(2)} kW`;
   }
 
-  // Scroll to result
   result.scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -242,9 +251,71 @@ function resetTimerOnly() {
 
 function resetForm() {
   resetTimerOnly();
-
   document.getElementById('initial').value = '';
   document.getElementById('final').value = '';
   document.getElementById('imperialVolume').value = imperialMode ? '0.991' : '';
   document.getElementById('result').textContent = '';
 }
+
+// --- GC Number Input Auto Formatting ---
+function setupGCInput() {
+  const gcInput = document.getElementById('gcNumber');
+
+  if (!gcInput) return;
+
+  gcInput.addEventListener('input', function (e) {
+    let value = e.target.value.replace(/\D/g, '');
+    let formatted = '';
+
+    if (value.length > 0) formatted += value.substring(0, 2);
+    if (value.length >= 3) formatted += '-' + value.substring(2, 5);
+    if (value.length >= 6) formatted += '-' + value.substring(5, 7);
+
+    e.target.value = formatted;
+  });
+
+  gcInput.addEventListener('keydown', function (e) {
+    const pos = gcInput.selectionStart;
+    if ((e.key === 'Backspace' || e.key === 'Delete') && (pos === 3 || pos === 7)) {
+      e.preventDefault();
+      gcInput.setSelectionRange(pos - 1, pos - 1);
+    }
+  });
+}
+
+// --- CSV Boiler Data Fetch ---
+function loadBoilerData() {
+  fetch('https://raw.githubusercontent.com/lexington1988/gas-rate-unfinished/main/service_info_full.csv')
+    .then(response => {
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      return response.text();
+    })
+    .then(csvText => {
+      const lines = csvText.trim().split('\n');
+      const headers = lines[0].split(',');
+
+      window.boilerData = lines.slice(1).map(line => {
+        const parts = line.split(',');
+        const entry = {};
+        headers.forEach((h, i) => entry[h.trim()] = parts[i]?.trim());
+        return entry;
+      });
+
+      console.log('Boiler data loaded:', window.boilerData);
+    })
+    .catch(err => console.error('CSV load error:', err));
+}
+
+// --- Search boiler data by GC number ---
+function findBoilerByGC(gcInput) {
+  const formattedGC = gcInput.trim().replace(/-/g, '');
+  return window.boilerData?.find(entry =>
+    entry["GC Number"]?.replace(/-/g, '') === formattedGC
+  );
+}
+
+// --- Init on DOM ready ---
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+  loadBoilerData();
+});
