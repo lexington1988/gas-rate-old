@@ -6,6 +6,18 @@
   <title>Gas Rate Calculator</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="style.css" />
+  <style>
+  .green {
+    color: green;
+    font-weight: bold;
+  }
+
+  .red {
+    color: red;
+    font-weight: bold;
+  }
+</style>
+
 </head>
 
 <body>
@@ -133,7 +145,7 @@
         div.addEventListener('click', () => {
           gcInput.value = entry["GC Number"];
           suggestionsDiv.innerHTML = '';
-          displayBoilerInfo(entry);
+          showBoilerInfo(entry);
 
           const resultBox = document.getElementById('boilerResult');
           if (resultBox) {
