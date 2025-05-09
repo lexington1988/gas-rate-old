@@ -6,7 +6,20 @@
   <title>Gas Rate Calculator</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="style.css" />
-  <style>
+ <style>
+  body {
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  .container {
+    width: 100%;
+    margin: 0 auto;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
   .green {
     color: green;
     font-weight: bold;
@@ -14,6 +27,26 @@
 
   .red {
     color: red;
+    font-weight: bold;
+  }
+
+  .gc-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 20px auto;
+    text-align: center;
+  }
+
+  .gc-wrapper input {
+    max-width: 240px;
+    padding: 8px;
+    text-align: center;
+  }
+
+  .gc-label {
+    margin-bottom: 6px;
     font-weight: bold;
   }
 </style>
@@ -29,7 +62,8 @@
       </div>
       <div id="imperialStatus"></div>
       <div class="toggle-wrapper">
-        <label for="imperialToggle">Imperial Mode</label>
+        <label for="imperialToggle"><span id="imperialToggleLabel">Imperial Mode</span></label>
+
         <input type="checkbox" id="imperialToggle">
       </div>
     </div>
@@ -87,7 +121,11 @@
     <button onclick="toggleBoilerFinder()">Search G.C Number</button>
 
     <div id="boilerFinder" class="boiler-lookup">
-      <input type="text" id="gcNumber" placeholder="Enter G.C Number (e.g., 47-311-87)">
+      <!-- ✅ Centered GC input -->
+      <div class="gc-wrapper">
+        <label for="gcNumber" class="gc-label">G.C. Number:</label>
+        <input type="text" id="gcNumber" placeholder="Enter G.C Number (e.g., 47-311-87)">
+      </div>
       <div class="suggestions"></div>
       <div id="boilerResult"></div>
     </div>
@@ -97,11 +135,24 @@
   <script src="script.js"></script>
 
   <script>
-    function toggleBoilerFinder() {
-      const section = document.getElementById('boilerFinder');
-      section.style.display = 'block';
-      document.getElementById('gcNumber').focus();
-    }
+function toggleBoilerFinder() {
+  const section = document.getElementById('boilerFinder');
+  section.style.display = 'block';
+
+  const gcInput = document.getElementById('gcNumber');
+  gcInput.focus();
+
+  // For mobile: allow keyboard to pop up before scrolling into view
+  setTimeout(() => {
+    // Try twice: once after short delay, once again after a bit more (keyboard likely shown)
+    gcInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => {
+      gcInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 500);
+  }, 200);
+}
+
+
 
     const gcInput = document.getElementById('gcNumber');
     const suggestionsDiv = document.querySelector('.suggestions');
