@@ -32,6 +32,8 @@ function toggleDarkMode() {
 
 function toggleImperialMode() {
   imperialMode = document.getElementById('imperialToggle').checked;
+  document.getElementById('imperialToggleLabel').textContent = imperialMode ? 'Metric Mode' : 'Imperial Mode';
+
   const status = document.getElementById('imperialStatus');
   const durationLabel = document.querySelector('label[for="duration"]');
   const modeSelect = document.getElementById('mode');
@@ -283,6 +285,8 @@ function resetForm() {
   lastNetKW = null;
   lastGrossKW = null;
   lastNetKWMode = null;
+  document.getElementById('boilerFinder').style.display = 'none';
+
 }
 
 
@@ -440,6 +444,8 @@ if (resultBox && resultBox.style.display !== 'none') {
   `;
 
   document.getElementById('boilerResult').innerHTML = html;
+  document.getElementById('boilerResult').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
 }
 
 
