@@ -183,6 +183,16 @@ function playBeep() {
   beep.currentTime = 0;
   beep.play();
 }
+function playEndBeep() {
+  const endBeep = document.getElementById('endBeep');
+  if (endBeep) {
+    endBeep.currentTime = 0;
+    endBeep.play().catch(() => {
+      // Mobile may still block it if not unlocked
+    });
+  }
+}
+
 
 function calculateRate() {
   const result = document.getElementById('result');
