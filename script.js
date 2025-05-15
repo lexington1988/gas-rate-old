@@ -8,6 +8,20 @@ let lastGrossKW = null;
 let lastNetKWMode = null;
 
 function init() {
+  const beep = document.getElementById('alertSound');
+
+  // ✅ Unlock audio on first user click or tap (mobile compatibility)
+  document.body.addEventListener('click', () => {
+    if (beep) {
+      beep.play().then(() => {
+        beep.pause();              // Immediately pause it
+        beep.currentTime = 0;      // Reset to start
+      }).catch(() => {
+        // Ignore errors — some browsers may still block auto-play
+      });
+    }
+  }, { once: true });
+
   document.getElementById('darkModeToggle').addEventListener('change', toggleDarkMode);
   document.getElementById('imperialToggle').addEventListener('change', toggleImperialMode);
   document.getElementById('gcNumber').addEventListener('input', toggleMode);
