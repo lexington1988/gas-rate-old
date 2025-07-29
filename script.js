@@ -268,7 +268,7 @@ function calculateRate() {
     const calorificValue = gasType === 'natural' ? 39.3 : 93.2;
 
     const gross = (3600 * calorificValue * volume) / (duration * 3.6);
-    const net = gross / 1.1;
+    const net = gross / 1.11;
 
     lastGrossKW = gross;
     lastNetKW = net;
