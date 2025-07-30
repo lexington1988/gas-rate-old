@@ -1,60 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png" />
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gas Rate Calculator</title>
+  <meta name="theme-color" content="#8a2be2" />
+
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="style.css" />
-    <style>
-    body {
-      overflow-x: hidden;
-      margin: 0;
-      padding: 0;
-    }
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
 
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 16px;
-    }
+  <style>
+  .green {
+    color: green;
+    font-weight: bold;
+  }
 
-    .green {
-      color: green;
-      font-weight: bold;
-    }
+  .red {
+    color: red;
+    font-weight: bold;
+  }
 
-    .red {
-      color: red;
-      font-weight: bold;
-    }
+  .gc-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 20px auto;
+    text-align: center;
+  }
 
-    /* ✅ Center the GC number input */
-    .gc-wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      margin: 20px auto;
-      text-align: center;
-    }
+  .gc-wrapper input {
+    max-width: 240px;
+    padding: 8px;
+    text-align: center;
+  }
 
-    .gc-wrapper input {
-      max-width: 240px;
-      padding: 8px;
-      text-align: center;
-    }
+  .gc-label {
+    margin-bottom: 6px;
+    font-weight: bold;
+  }
 
-    .gc-label {
-      margin-bottom: 6px;
-      font-weight: bold;
-    }
-  </style>
+  html, body {
+    overflow-x: hidden;
+  }
+
+  body.admin-mode input[data-key] {
+    font-size: 0.95rem;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fff;
+    color: #000;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  body.dark-mode.admin-mode input[data-key] {
+    background-color: #222;
+    border-color: #444;
+    color: #fff;
+  }
+
+  .boiler-grid input[data-key] {
+    margin-top: 4px;
+  }
+
+  .boiler-card button {
+    background: #6a0dad;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .boiler-card button:hover {
+    background: #5800b0;
+  }
+
+  .tag.yes {
+    background: crimson;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: bold;
+    display: inline-block;
+  }
+
+  .tag.no {
+    background: gray;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: bold;
+    display: inline-block;
+  }
+</style>
+
+
+
+
+
 
 </head>
 
 <body>
+  <!-- 🔐 Login screen -->
+<div id="loginScreen" style="display: none; justify-content: center; align-items: center; flex-direction: column; height: 100vh;">
+  <h2 style="color: #6a0dad;">Gas Rate Login</h2>
+  <input type="text" id="loginUsername" placeholder="Username" style="margin: 10px; padding: 10px; width: 220px;" />
+
+  <input type="password" id="loginPassword" placeholder="Password" style="margin: 10px; padding: 10px; width: 220px;" />
+  <button onclick="login()" style="background: #8a2be2; color: white; padding: 10px 20px; border: none; border-radius: 6px;">Login</button>
+  <div id="loginError" style="color: red; margin-top: 10px;"></div>
+</div>
+
   <div class="container">
+ 
+
     <div class="toggles-row">
       <div class="toggle-wrapper">
         <label for="darkModeToggle" onclick="toggleDarkMode()">Dark Mode</label>
@@ -115,113 +185,223 @@
 
     <button id="calculateBtn" onclick="calculateRate()">Calculate</button>
     <button onclick="resetForm()">Reset</button>
-
+<div id="toast" class="toast"></div>
     <div id="result" class="results"></div>
 
     <button onclick="toggleBoilerFinder()">Search G.C Number</button>
-
     <div id="boilerFinder" class="boiler-lookup">
       <!-- ✅ Centered GC input -->
       <div class="gc-wrapper">
         <label for="gcNumber" class="gc-label">G.C. Number:</label>
-        <input type="text" id="gcNumber" placeholder="Enter G.C Number (e.g., 47-311-87)">
+        <input type="text" id="gcNumber" placeholder="Enter GC number, make or model">
+
       </div>
       <div class="suggestions"></div>
-      <div id="boilerResult"></div>
-    </div>
-  </div>
+    <div id="boilerResult"></div>
+      <!-- 🔽 CSV UPLOADER (Admin Only) -->
+<div id="csvUploader" style="display:none; margin-top:20px;">
+  <h3>📤 Upload Boiler CSV</h3>
+  <input type="file" id="csvFileInput" accept=".csv" />
+  <button id="uploadCSVButton">Upload CSV</button>
+  <div id="csvStatus" style="margin-top:10px;"></div>
+</div>
 
- <audio id="alertSound" src="beep.mp3" preload="auto" playsinline></audio>
-  <audio id="endBeep" src="end-beep.mp3" preload="auto" playsinline></audio>
 
-  <script src="script.js"></script>
+</div>
+    <!-- 🔓 Subtle Logout Button -->
+<div style="text-align: center; margin-top: 1.5rem;">
+  <button id="logoutBtn" onclick="logout()" style="
+    background: none;
+    color: #8a2be2;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: underline;
+  ">
+    Logout
+  </button>
+</div>
+</div> <!-- END of .container -->
 
-  <script>
+
+
+
+
+
+<audio id="alertSound" src="beep.mp3" preload="auto" playsinline></audio>
+<audio id="endBeep" src="end-beep.mp3" preload="auto" playsinline></audio>
+
+
+<script>
 function toggleBoilerFinder() {
   const section = document.getElementById('boilerFinder');
-  section.style.display = 'block';
+  const isVisible = section.style.display === 'block';
+  section.style.display = isVisible ? 'none' : 'block';
 
-  const gcInput = document.getElementById('gcNumber');
-  gcInput.focus();
+  if (!isVisible) {
+    const gcInput = document.getElementById('gcNumber');
+    gcInput.focus();
+    setTimeout(() => gcInput.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200);
+  }
+}
 
-  // For mobile: allow keyboard to pop up before scrolling into view
+// ✅ Setup fuzzy search using Fuse.js
+let fuse;
+function setupFuzzySearch() {
+  if (!window.boilerData) return;
+ // 🧠 Add virtual combined field "makeModel"
+// 🔁 Build a searchable "allText" field per boiler (GC + Make + Model)
+const enrichedBoilerData = window.boilerData.map(entry => {
+  const make = entry.Make || '';
+  const model = entry.Model || '';
+  const gc = entry["GC Number"] || '';
+  return {
+    ...entry,
+    allText: `${make} ${model} ${gc}`.toLowerCase().replace(/[^\w\s]/g, '')
+  };
+});
+
+fuse = new Fuse(enrichedBoilerData, {
+  keys: ['allText'],
+  threshold: 0.4,
+  ignoreLocation: true,
+  minMatchCharLength: 2,
+  useExtendedSearch: true,     // ✅ Enables token-based matching
+});
+
+
+
+}
+
+// 🔁 Setup fuzzy search after boiler data loads
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.boilerData) setupFuzzySearch();
+  
+});
+
+const gcInput = document.getElementById('gcNumber');
+const suggestionsDiv = document.querySelector('.suggestions');
+
+gcInput.addEventListener('input', function (e) {
+  const query = e.target.value.trim();
+  showSuggestions(query);
+});
+
+document.addEventListener('click', function (e) {
+  if (e.target !== gcInput) {
+    suggestionsDiv.innerHTML = '';
+  }
+});
+
+function showSuggestions(query) {
+  suggestionsDiv.innerHTML = '';
+  if (!query || !fuse) return;
+
+  const trimmed = query.trim().toLowerCase();
+  const digitsOnly = trimmed.replace(/\D/g, '');
+  let results = [];
+
+  const isFullGC = /^\d{7}$/.test(digitsOnly);
+  const isMostlyNumeric = /^[\d\s-]{3,}$/.test(trimmed);
+
+  if (isFullGC) {
+    const match = window.boilerData.find(entry => {
+      const gcRaw = (entry["GC Number"] || '').replace(/\D/g, '');
+      return gcRaw === digitsOnly;
+    });
+    if (match) results = [{ item: match }];
+  } else if (isMostlyNumeric) {
+    results = fuse.search(trimmed).slice(0, 8);
+  } else {
+    const tokens = trimmed
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(token => `'${token}`);
+    const searchQuery = tokens.join(' ');
+    results = fuse.search(searchQuery).slice(0, 8);
+  }
+
+  if (results.length === 0) {
+  suggestionsDiv.innerHTML = `
+    <div style="text-align: center;">
+      <span style="color: red; font-weight: bold;">⚠️No matching boilers found⚠️</span>
+    </div>
+  `;
+
+  // Auto-hide after 3 seconds
   setTimeout(() => {
-    // Try twice: once after short delay, once again after a bit more (keyboard likely shown)
-    gcInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => {
-      gcInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 500);
-  }, 200);
+    suggestionsDiv.innerHTML = '';
+  }, 3000);
+
+  return;
+}
+
+  results.forEach(({ item }) => {
+  const rawGC = item["GC Number"].replace(/\D/g, '');
+  const formattedGC = rawGC.length === 7
+    ? `${rawGC.slice(0, 2)}-${rawGC.slice(2, 5)}-${rawGC.slice(5, 7)}`
+    : item["GC Number"];
+
+  const make = item["Make"] || '';
+  const model = item["Model"] || '';
+
+  const div = document.createElement('div');
+  div.innerHTML = `
+    <span class="gc-highlight">${formattedGC}</span> - ${make} ${model}
+  `;
+  div.style.padding = '5px';
+  div.style.cursor = 'pointer';
+  div.addEventListener('click', () => {
+    gcInput.value = formattedGC;
+    suggestionsDiv.innerHTML = '';
+    showBoilerInfo(item);
+    const resultBox = document.getElementById('boilerResult');
+    if (resultBox) {
+      resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+  suggestionsDiv.appendChild(div);
+});
+
 }
 
 
 
-    const gcInput = document.getElementById('gcNumber');
-    const suggestionsDiv = document.querySelector('.suggestions');
 
-    function normalizeGC(gc) {
-      return gc.replace(/-/g, '').padStart(7, '0');
-    }
 
-    function displayBoilerInfo(boiler) {
-      const boilerResult = document.getElementById('boilerResult');
-      const makeModel = `<strong>${boiler.Make?.trim() || ''} ${boiler.Model?.trim() || ''}</strong><br>`;
-      const gross = `Gross Heat Input: ${boiler['kW Gross'] || ''} kW<br>`;
-      const net = `Net Heat Input: ${boiler['kW Net'] || ''} kW<br>`;
-      const tolerance = `Net kW (+5%/-10%): ${boiler['Net kW (+5%/-10%)'] || ''}<br>`;
-      const co2Range = `Max CO₂: ${boiler['Max CO2%'] || ''}% / Min CO₂: ${boiler['Min CO2%'] || ''}%<br>`;
-      const ratio = `Max Ratio: ${boiler['Max Ratio'] || ''}<br>`;
-      const co = `Max CO: ${boiler['Max Co (PPM)'] || ''} ppm<br>`;
-      const pressure = `Max Pressure: ${boiler['Max (Burner Pressure Mb)'] || ''} mb / Min Pressure: ${boiler['Min (Burner Pressure Mb)'] || ''} mb<br>`;
-      const rawStrip = (boiler['Strip Service Required'] || '').trim();
-      const strip = rawStrip
-        ? `<div class="small-note"><strong>Strip Service Required:</strong> <em>${rawStrip.toLowerCase() === 'yes' ? 'Yes' : rawStrip}</em></div>`
-        : '';
+</script>
 
-      boilerResult.innerHTML = makeModel + gross + net + tolerance + co2Range + ratio + co + pressure + strip;
-    }
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
-    function showSuggestions(query) {
-      suggestionsDiv.innerHTML = '';
-      if (!query) return;
+<!-- Your app's script -->
+<script src="script.js"></script>
 
-      const normalizedQuery = normalizeGC(query);
-      const matches = (window.boilerData || []).filter(entry =>
-        normalizeGC(entry["GC Number"] || '').startsWith(normalizedQuery)
-      );
+<!-- Disclaimer -->
+<div style="text-align: center; margin-top: 2rem; margin-bottom: 1rem;">
+  <small style="color: #8a2be2; font-weight: bold;">
+    *This tool is to be used as a guide only and Manufacturer's Instructions should always be referenced*
+  </small>
+</div>
+<!-- 🛠️ Admin Mode Toggle Button -->
+<button id="adminToggleBtn" onclick="toggleAdminMode()" style="
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #6a0dad;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  z-index: 9999;
+">⚙️</button>
 
-      matches.forEach(entry => {
-        const div = document.createElement('div');
-        div.textContent = `${entry["GC Number"]} - ${entry["Make"]} ${entry["Model"]}`;
-        div.style.padding = '5px';
-        div.style.cursor = 'pointer';
-        div.addEventListener('click', () => {
-          gcInput.value = entry["GC Number"];
-          suggestionsDiv.innerHTML = '';
-          showBoilerInfo(entry);
-
-          const resultBox = document.getElementById('boilerResult');
-          if (resultBox) {
-            resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        });
-        suggestionsDiv.appendChild(div);
-      });
-    }
-
-    gcInput.addEventListener('input', function (e) {
-      let value = e.target.value.replace(/\D/g, '');
-      if (value.length > 2) value = value.slice(0, 2) + '-' + value.slice(2);
-      if (value.length > 6) value = value.slice(0, 6) + '-' + value.slice(6);
-      e.target.value = value;
-      showSuggestions(e.target.value);
-    });
-
-    document.addEventListener('click', function (e) {
-      if (e.target !== gcInput) {
-        suggestionsDiv.innerHTML = '';
-      }
-    });
-  </script>
 </body>
 </html>
