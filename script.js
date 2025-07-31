@@ -41,21 +41,31 @@ function handleUserAuthState(user) {
         let tapCount = 0;
         let tapTimeout;
 
-        if (secretArea) {
-          secretArea.addEventListener('click', () => {
-            tapCount++;
-            clearTimeout(tapTimeout);
+      if (secretArea) {
+  secretArea.addEventListener('click', () => {
+    tapCount++;
+    clearTimeout(tapTimeout);
 
-            if (tapCount >= 5) {
-              adminButton.style.display = "inline-block";
-              showToast("🔓 Admin mode unlocked");
-            }
+    if (tapCount >= 5) {
+      tapCount = 0;
 
-            tapTimeout = setTimeout(() => {
-              tapCount = 0;
-            }, 1000);
-          });
-        }
+      const pass = prompt("Enter admin password:");
+      if (pass === "admin123") {
+        isAdmin = true;
+        document.body.classList.add('admin-mode');
+        showToast("✅ Admin Mode enabled");
+      } else {
+        showToast("❌ Incorrect password");
+      }
+    }
+
+    tapTimeout = setTimeout(() => {
+      tapCount = 0;
+    }, 1000);
+  });
+}
+
+
       } else {
         if (adminButton) adminButton.style.display = "none";
         if (adminToggleBtn) adminToggleBtn.style.display = "none";
