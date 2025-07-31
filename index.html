@@ -451,28 +451,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <!-- Disclaimer -->
 <div style="text-align: center; margin-top: 2rem; margin-bottom: 1rem;">
-  <small id="secretTapArea" style="color: #8a2be2; font-weight: bold;">
-    *This tool is to be used as a guide only and Manufacturer's Instructions should always be referenced*
-  </small>
+ <small id="secretTapArea" style="
+  color: #8a2be2;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+">
+  *This tool is to be used as a guide only and Manufacturer's Instructions should always be referenced*
+</small>
+
 </div>
 
 <!-- 🛠️ Admin Mode Toggle Button -->
-<button id="adminToggleBtn" onclick="toggleAdminMode()" style="
-  display: none; /* ✅ Start hidden */
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #6a0dad;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 1.2rem;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  z-index: 9999;
-">⚙️</button>
+<!-- <button id="adminToggleBtn" onclick="toggleAdminMode()" style="display: none;">⚙️</button> -->
+
 
 
 </body>
