@@ -19,55 +19,65 @@ let currentSessionId = null;
 
 // ✅ Show login or app depending on user status
 firebase.auth().onAuthStateChanged((user) => {
+  handleUserAuthState(user);
+});
+
+function handleUserAuthState(user) {
   const adminButton = document.getElementById('adminBtn');
   const secretArea = document.getElementById('secretTapArea');
 
- if (user) {
-  // ✅ Show app to ALL logged-in users
-  document.getElementById("loginScreen").style.display = "none";
-  document.querySelector(".container").style.display = "block";
+  // ✅ Delay to ensure DOM is ready
+  setTimeout(() => {
+    const adminToggleBtn = document.getElementById('adminToggleBtn');
 
-  // ✅ Only enable admin unlock for lex@fake.com
-  if (user.email === "lex@fake.com") {
-    adminButton.style.display = "none";
-    let tapCount = 0;
-    let tapTimeout;
+    if (user) {
+      document.getElementById("loginScreen").style.display = "none";
+      document.querySelector(".container").style.display = "block";
 
-    if (secretArea) {
-      secretArea.addEventListener('click', () => {
-        tapCount++;
-        clearTimeout(tapTimeout);
+      if (user.email === "lex@fake.com") {
+        if (adminToggleBtn) adminToggleBtn.style.display = "block";
+        if (adminButton) adminButton.style.display = "none";
 
-        if (tapCount >= 5) {
-          adminButton.style.display = "inline-block";
-          showToast("🔓 Admin mode unlocked");
+        let tapCount = 0;
+        let tapTimeout;
+
+        if (secretArea) {
+          secretArea.addEventListener('click', () => {
+            tapCount++;
+            clearTimeout(tapTimeout);
+
+            if (tapCount >= 5) {
+              adminButton.style.display = "inline-block";
+              showToast("🔓 Admin mode unlocked");
+            }
+
+            tapTimeout = setTimeout(() => {
+              tapCount = 0;
+            }, 1000);
+          });
         }
+      } else {
+        if (adminButton) adminButton.style.display = "none";
+        if (adminToggleBtn) adminToggleBtn.style.display = "none";
+      }
 
-        tapTimeout = setTimeout(() => {
-          tapCount = 0;
-        }, 1000);
-      });
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", logout);
+      }
+
+    } else {
+      document.getElementById("loginScreen").style.display = "flex";
+      document.querySelector(".container").style.display = "none";
+
+      if (adminButton) adminButton.style.display = "none";
+      if (adminToggleBtn) adminToggleBtn.style.display = "none";
     }
-  } else {
-    // 👤 Non-admin users: hide admin button
-    if (adminButton) adminButton.style.display = "none";
-  }
-
-  // ✅ Attach logout for all users
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", logout);
-  }
-
-} else {
-  // Not logged in — show login screen
-  document.getElementById("loginScreen").style.display = "flex";
-  document.querySelector(".container").style.display = "none";
-
-  if (adminButton) adminButton.style.display = "none";
+  }, 100);
 }
 
-});
+
+
 
 
 
