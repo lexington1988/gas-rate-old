@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
   <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png" />
 
   <meta charset="UTF-8" />
@@ -84,14 +86,10 @@
   }
 
   .tag.yes {
-    background: crimson;
-    color: white;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 0.85em;
-    font-weight: bold;
-    display: inline-block;
-  }
+  background: #6a0dad; /* Purple theme */
+  color: white;
+}
+
 
   .tag.no {
     background: gray;
@@ -102,6 +100,26 @@
     font-weight: bold;
     display: inline-block;
   }
+    .toast {
+  position: fixed;
+  top: 120px; /* adjust if needed to align with boiler card */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #6a0dad;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+}
+
 </style>
 
 
@@ -199,11 +217,15 @@
       <div class="suggestions"></div>
     <div id="boilerResult"></div>
       <!-- 🔽 CSV UPLOADER (Admin Only) -->
-<div id="csvUploader" style="display:none; margin-top:20px;">
-  <h3>📤 Upload Boiler CSV</h3>
+<div id="csvUploader" style="display:none; margin-top: 20px;">
+  <button onclick="downloadCSV()" style="margin-top: 10px;">📥 Download CSV</button>
+
+  <h3>📤 Admin CSV Upload</h3>
   <input type="file" id="csvFileInput" accept=".csv" />
-  <button id="uploadCSVButton">Upload CSV</button>
-  <div id="csvStatus" style="margin-top:10px;"></div>
+  <button id="uploadCSVButton">Upload CSV to Firestore</button>
+  <div id="csvStatus" style="margin-top:10px; font-weight: bold;"></div>
+</div>
+
 </div>
 
 
@@ -368,6 +390,59 @@ function showSuggestions(query) {
 
 
 
+document.addEventListener("DOMContentLoaded", () => {
+  firebase.auth().onAuthStateChanged((user) => {
+    if (user && isAdmin) {
+      const uploader = document.getElementById('csvUploader');
+      if (uploader) uploader.style.display = 'block';
+
+      const uploadBtn = document.getElementById('uploadCSVButton');
+      const fileInput = document.getElementById('csvFileInput');
+      const statusDiv = document.getElementById('csvStatus');
+
+      uploadBtn.addEventListener('click', () => {
+        const file = fileInput.files[0];
+        if (!file) {
+          alert("Please select a CSV file first.");
+          return;
+        }
+
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: async function(results) {
+            const rows = results.data;
+            let success = 0;
+            let failed = 0;
+
+            statusDiv.innerHTML = `Uploading ${rows.length} boilers...`;
+
+            for (const boiler of rows) {
+              const gc = boiler["GC Number"]?.replace(/\D/g, '');
+              if (!gc || gc.length !== 7) {
+                failed++;
+                continue;
+              }
+
+              const formattedGC = `${gc.slice(0, 2)}-${gc.slice(2, 5)}-${gc.slice(5, 7)}`;
+              boiler["GC Number"] = formattedGC;
+
+              try {
+                await db.collection("boiler-data").doc(gc).set(boiler, { merge: true });
+                success++;
+              } catch (err) {
+                console.error("❌ Error uploading:", boiler, err);
+                failed++;
+              }
+            }
+
+            statusDiv.innerHTML = `✅ ${success} uploaded, ❌ ${failed} failed.`;
+          }
+        });
+      });
+    }
+  });
+});
 
 
 </script>
@@ -382,10 +457,11 @@ function showSuggestions(query) {
 
 <!-- Disclaimer -->
 <div style="text-align: center; margin-top: 2rem; margin-bottom: 1rem;">
-  <small style="color: #8a2be2; font-weight: bold;">
+  <small id="secretTapArea" style="color: #8a2be2; font-weight: bold;">
     *This tool is to be used as a guide only and Manufacturer's Instructions should always be referenced*
   </small>
 </div>
+
 <!-- 🛠️ Admin Mode Toggle Button -->
 <button id="adminToggleBtn" onclick="toggleAdminMode()" style="
   position: fixed;
