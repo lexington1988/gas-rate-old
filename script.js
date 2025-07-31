@@ -18,14 +18,18 @@ const db = firebase.firestore();
 let currentSessionId = null;
 
 // ✅ Show login or app depending on user status
- firebase.auth().onAuthStateChanged((user) => {
+firebase.auth().onAuthStateChanged((user) => {
   const adminButton = document.getElementById('adminBtn');
   const secretArea = document.getElementById('secretTapArea');
 
-  if (user && user.email === "lex@fake.com") {
-    // Hide the admin button by default
-    adminButton.style.display = "none";
+ if (user) {
+  // ✅ Show app to ALL logged-in users
+  document.getElementById("loginScreen").style.display = "none";
+  document.querySelector(".container").style.display = "block";
 
+  // ✅ Only enable admin unlock for lex@fake.com
+  if (user.email === "lex@fake.com") {
+    adminButton.style.display = "none";
     let tapCount = 0;
     let tapTimeout;
 
@@ -41,15 +45,30 @@ let currentSessionId = null;
 
         tapTimeout = setTimeout(() => {
           tapCount = 0;
-        }, 1000); // Reset tap count after 1 second
+        }, 1000);
       });
     }
-
   } else {
-    // Hide the admin button completely for other users
-    adminButton.style.display = "none";
+    // 👤 Non-admin users: hide admin button
+    if (adminButton) adminButton.style.display = "none";
   }
+
+  // ✅ Attach logout for all users
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", logout);
+  }
+
+} else {
+  // Not logged in — show login screen
+  document.getElementById("loginScreen").style.display = "flex";
+  document.querySelector(".container").style.display = "none";
+
+  if (adminButton) adminButton.style.display = "none";
+}
+
 });
+
 
 
 
@@ -723,8 +742,18 @@ function showToast(message) {
 
 
 
-  document.addEventListener("DOMContentLoaded", () => {
+ document.addEventListener("DOMContentLoaded", () => {
   init();
+
+  // ✅ Fix: attach logout button functionality
+  const logoutBtn = document.getElementById("logoutBtn");
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", logout);
+}
+
+  
+  // Your existing code...
+
 
 
   const useFirestore = true;
