@@ -41,8 +41,27 @@ function handleUserAuthState(user) {
         let tapCount = 0;
         let tapTimeout;
 
-      if (secretArea) {
+    if (secretArea) {
+  let tapCount = 0;
+  let tapTimeout;
+  let lastTapTime = 0;
+
   secretArea.addEventListener('click', () => {
+    const now = Date.now();
+    const timeSinceLastTap = now - lastTapTime;
+
+    // ✅ Handle double tap to disable admin mode
+    if (isAdmin && timeSinceLastTap < 400) {
+      isAdmin = false;
+      document.body.classList.remove('admin-mode');
+      document.getElementById('boilerResult').innerHTML = ''; // 🧼 clear boiler card
+      showToast("🔒 Admin Mode disabled");
+      return;
+    }
+
+    lastTapTime = now;
+
+    // ✅ Handle 5 taps to enable admin mode
     tapCount++;
     clearTimeout(tapTimeout);
 
@@ -64,6 +83,7 @@ function handleUserAuthState(user) {
     }, 1000);
   });
 }
+
 
 
       } else {
@@ -1061,6 +1081,3 @@ function downloadCSV() {
 
   showToast("📥 CSV downloaded successfully");
 }
-
-
-
