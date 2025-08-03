@@ -130,13 +130,27 @@ html, body {
 }
 
 .container {
-  max-width: 360px;
+  width: 90%;
+  max-width: 400px;     /* Default for mobile */
   margin: 40px auto;
   background-color: white;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 20px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: max-width 0.3s ease;
 }
+@media (min-width: 768px) {
+  .container {
+    max-width: 600px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 700px;
+  }
+}
+
 
 
 * {
