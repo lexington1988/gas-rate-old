@@ -581,6 +581,8 @@ function showBoilerInfo(boiler) {
   currentGCNumber = boiler["GC Number"]?.trim();
   const make = boiler.Make?.trim() || '';
   const model = boiler.Model?.trim() || '';
+  console.log('Manual URL:', boiler['Manual']);
+
   const gross = boiler['kW Gross'] || '';
   const net = boiler['kW Net'] || '';
  const netRange = boiler['Net kW (+5%/-10%)'] || '';
@@ -696,6 +698,9 @@ const minPressure = boiler['Min (Burner Pressure Mb)'] || '';
         ${toleranceMessage}
       </div>
       ${isAdmin ? '<button onclick="saveBoilerEdits()" style="margin-top:10px;">💾 Save Changes</button>' : ''}
+     ${!isAdmin && boiler['Manual']?.trim() ? `<div style="text-align:center; margin-top: 1rem;"><a href="${boiler['Manual'].trim()}" target="_blank" style="color: #8a2be2; font-size: 0.85rem; font-weight: bold; text-decoration: underline;">View Manual</a></div>` : ''}
+
+
     </div>
   `;
 
