@@ -595,7 +595,7 @@ const minCO2 = boiler['Min CO2%'] || '';
   const maxPressure = boiler['Max (Burner Pressure Mb)'] || '';
 const minPressure = boiler['Min (Burner Pressure Mb)'] || '';
 
-  const ratio = boiler['Max_Ratio'] || '';
+  const ratio = boiler['Max Ratio'] || '';
  const stripRaw = boiler['Strip Service Required']?.trim().toLowerCase() || '';
 
   const strip = stripRaw === 'yes' ? 'yes' : stripRaw || 'no';
@@ -671,29 +671,60 @@ const minPressure = boiler['Min (Burner Pressure Mb)'] || '';
           </div>`
         : `<div class="boiler-title">${make} ${model}</div>`}
 
-      <div class="boiler-grid">
-        ${field('Net Heat Input', 'kW Net', appendUnit(net, 'kW'))}
-        ${field('Net Heat Input Range', 'Net kW (+5%/-10%)', netRange)}
-        ${field('Gross Heat Input', 'kW Gross', appendUnit(gross, 'kW'))}
-        ${field('Max CO', 'Max Co (PPM)', appendUnit(maxCO, 'ppm'))}
-          ${field('Max Burner Pressure (Mb)', 'Max Burner Pressure (Mb)', appendUnit(maxPressure, 'mb'))}
-  ${field('Min Burner Pressure (Mb)', 'Min Burner Pressure (Mb)', appendUnit(minPressure, 'mb'))}
+    <div class="boiler-grid">
+  ${field('Net Heat Input', 'kW Net', appendUnit(net, 'kW'))}
+  ${field('Net Heat Input Range', 'Net kW (+5%/-10%)', netRange)}
+  ${field('Gross Heat Input', 'kW Gross', appendUnit(gross, 'kW'))}
+  ${field('Max CO', 'Max Co (PPM)', appendUnit(maxCO, 'ppm'))}
 
-        ${isAdmin
+  ${isAdmin
+    ? `
+      <div style="display: flex; gap: 10px; width: 100%;">
+        ${field('Max CO₂%', 'Max CO2%', maxCO2)}
+        ${field('Min CO₂%', 'Min CO2%', minCO2)}
+      </div>
+    `
+    : `<div><div class="label">CO₂ Range</div><div class="value">Max: ${maxCO2}%<br>Min: ${minCO2}%</div></div>`}
+
+${field('Max Ratio', isAdmin ? 'Max Ratio' : 'Max_Ratio', ratio)}
+
+${isAdmin
   ? `
-    <div style="display: flex; gap: 10px;">
-      ${field('Max CO₂%', 'Max CO2%', maxCO2)}
-      ${field('Min CO₂%', 'Min CO2%', minCO2)}
+    <div style="display: flex; gap: 10px; width: 100%;">
+      ${field('Max Burner Pressure (Mb)', 'Max (Burner Pressure Mb)', appendUnit(maxPressure, 'mb'))}
+      ${field('Min Burner Pressure (Mb)', 'Min (Burner Pressure Mb)', appendUnit(minPressure, 'mb'))}
     </div>
   `
-  : `<div><div class="label">CO₂ Range</div><div class="value">Max: ${maxCO2}%<br>Min: ${minCO2}%</div></div>`}
+  : `
+    <div>
+      <div class="label">Burner Pressure</div>
+      <div class="value">
+        Max: ${appendUnit(maxPressure, 'mb')}<br>
+        Min: ${appendUnit(minPressure, 'mb')}
+      </div>
+    </div>
+  `
+}
 
 
-       
 
-        ${isAdmin 
-          ? field('Strip Service Required', 'Strip Service Required', strip)
-          : `<div><div class="label">Strip Service Required</div><div class="value"><span class="tag ${strip === 'yes' ? 'yes' : 'no'}">${strip.charAt(0).toUpperCase() + strip.slice(1)}</span></div></div>`}
+  ${isAdmin 
+    ? field('Strip Service Required', 'Strip Service Required', strip)
+    : `<div><div class="label">Strip Service Required</div><div class="value"><span class="tag ${strip === 'yes' ? 'yes' : 'no'}">${strip.charAt(0).toUpperCase() + strip.slice(1)}</span></div></div>`}
+
+
+
+${isAdmin ? field('Manual URL (e.g. https://...)', 'Manual', boiler['Manual'] || '') : ''}
+
+${isAdmin ? `
+  <div style="grid-column: 1 / -1; text-align: center; margin-top: 0.4rem;">
+    <button onclick="testManualLink()" style="background: #6a0dad; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-size: 0.85rem;">
+      🔗 Test Manual Link
+    </button>
+  </div>
+` : ''}
+
+
 
         ${toleranceMessage}
       </div>
@@ -745,6 +776,12 @@ function addNewBoiler() {
   window.boilerData.push(newBoiler);
   showToast("✅ New boiler added");
   showBoilerInfo(newBoiler);
+fuse = new Fuse(boilerData, {
+    keys: ['GC Number', 'Make', 'Model'],
+    threshold: 0.4
+  });
+
+  console.log('✅ New boiler added and search index updated.');
 }
 
 function deleteBoiler() {
@@ -1057,6 +1094,11 @@ function saveBoilerEdits() {
     const rawKey = input.getAttribute('data-key');
     const safeKey = keyMap[rawKey] || rawKey;
     let val = input.value.trim();
+  // ✅ Validate Manual field if present
+  if (safeKey === 'Manual' && val && !/^https?:\/\//i.test(val)) {
+    alert("❌ Manual URL must start with http:// or https://");
+    val = ''; // Clear invalid value
+  }
 
     val = val.replace(/\bkW\b|\bppm\b|\bmb\b|[%°]/gi, '').trim();
     if (val.length > 200) val = val.slice(0, 200);
@@ -1085,4 +1127,16 @@ function downloadCSV() {
   document.body.removeChild(link);
 
   showToast("📥 CSV downloaded successfully");
+}
+function testManualLink() {
+  const input = document.querySelector('input[data-key="Manual"]');
+  if (!input) return;
+
+  const url = input.value.trim();
+  if (!/^https?:\/\//i.test(url)) {
+    alert("❌ Invalid URL. It must start with http:// or https://");
+    return;
+  }
+
+  window.open(url, '_blank');
 }
